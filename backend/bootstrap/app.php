@@ -46,9 +46,6 @@ $app->singleton(
     App\Exceptions\Handler::class
 );
 
-// Configuração do SwaggerLume (documentação de API)
-$app->configure('swagger-lume');
-
 // Kernel da linha de comando (responsável por migrations, jobs, etc)
 $app->singleton(
     Illuminate\Contracts\Console\Kernel::class,
