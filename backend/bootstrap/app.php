@@ -1,115 +1,67 @@
 <?php
 
-require_once __DIR__.'/../vendor/autoload.php';
+// Autoload do Composer: carrega automaticamente classes e dependências
+require_once __DIR__ . '/../vendor/autoload.php';
 
+// Carrega as variáveis de ambiente a partir do arquivo .env
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
     dirname(__DIR__)
 ))->bootstrap();
 
+// Define o timezone da aplicação com fallback para UTC
 date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
 
 /*
 |--------------------------------------------------------------------------
-| Create The Application
+| Criação da Instância do Lumen
 |--------------------------------------------------------------------------
-|
-| Here we will load the environment and create the application instance
-| that serves as the central piece of this framework. We'll use this
-| application as an "IoC" container and router for this framework.
-|
+| Cria a aplicação base, que funciona como um contêiner IoC e roteador.
+| A instância do Lumen gerencia todos os componentes do app.
 */
 
 $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
-// $app->withFacades();
+// Ativa suporte a Facades (como DB::, Config:: etc)
+$app->withFacades();
 
-// $app->withEloquent();
+// Ativa o Eloquent ORM para manipulação de banco de dados via modelos
+$app->withEloquent();
+
+// Carrega configurações de banco de dados a partir de config/database.php
+$app->configure('database');
 
 /*
 |--------------------------------------------------------------------------
-| Register Container Bindings
+| Bindings do Contêiner de Injeção de Dependência
 |--------------------------------------------------------------------------
-|
-| Now we will register a few bindings in the service container. We will
-| register the exception handler and the console kernel. You may add
-| your own bindings here if you like or you can make another file.
-|
+| Aqui registramos implementações para interfaces do framework.
+| Isso inclui o manipulador de exceções e o kernel de comandos (CLI).
 */
 
+// Manipulador de exceções global
 $app->singleton(
     Illuminate\Contracts\Debug\ExceptionHandler::class,
     App\Exceptions\Handler::class
 );
 
+// Configuração do SwaggerLume (documentação de API)
+$app->configure('swagger-lume');
+
+// Kernel da linha de comando (responsável por migrations, jobs, etc)
 $app->singleton(
     Illuminate\Contracts\Console\Kernel::class,
     App\Console\Kernel::class
 );
 
-/*
-|--------------------------------------------------------------------------
-| Register Config Files
-|--------------------------------------------------------------------------
-|
-| Now we will register the "app" configuration file. If the file exists in
-| your configuration directory it will be loaded; otherwise, we'll load
-| the default version. You may register other files below as needed.
-|
-*/
-
 $app->configure('app');
-
-/*
-|--------------------------------------------------------------------------
-| Register Middleware
-|--------------------------------------------------------------------------
-|
-| Next, we will register the middleware with the application. These can
-| be global middleware that run before and after each request into a
-| route or middleware that'll be assigned to some specific routes.
-|
-*/
-
-// $app->middleware([
-//     App\Http\Middleware\ExampleMiddleware::class
-// ]);
-
-// $app->routeMiddleware([
-//     'auth' => App\Http\Middleware\Authenticate::class,
-// ]);
-
-/*
-|--------------------------------------------------------------------------
-| Register Service Providers
-|--------------------------------------------------------------------------
-|
-| Here we will register all of the application's service providers which
-| are used to bind services into the container. Service providers are
-| totally optional, so you are not required to uncomment this line.
-|
-*/
-
-// $app->register(App\Providers\AppServiceProvider::class);
-// $app->register(App\Providers\AuthServiceProvider::class);
-// $app->register(App\Providers\EventServiceProvider::class);
-
-/*
-|--------------------------------------------------------------------------
-| Load The Application Routes
-|--------------------------------------------------------------------------
-|
-| Next we will include the routes file so that they can all be added to
-| the application. This will provide all of the URLs the application
-| can respond to, as well as the controllers that may handle them.
-|
-*/
 
 $app->router->group([
     'namespace' => 'App\Http\Controllers',
 ], function ($router) {
-    require __DIR__.'/../routes/web.php';
+    require __DIR__ . '/../routes/web.php';
 });
 
+// Retorna a instância configurada da aplicação
 return $app;

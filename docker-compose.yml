@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "7001:7001"
+    volumes:
+      - ./backend:/var/www
+    working_dir: /var/www
+    command: php -S 0.0.0.0:7001 -t public
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "7000:7000"
+    volumes:
+      - ./frontend:/app
+    working_dir: /app
+    command: npm run dev -- --host
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
