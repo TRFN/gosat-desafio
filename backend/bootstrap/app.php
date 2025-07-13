@@ -23,6 +23,9 @@ $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\DB;
+
 // Ativa suporte a Facades (como DB::, Config:: etc)
 $app->withFacades();
 
@@ -56,7 +59,7 @@ $app->configure('app');
 
 $app->router->group([
     'namespace' => 'App\Http\Controllers',
-], function ($router) {
+], function ($router) use ($app) {
     require __DIR__ . '/../routes/web.php';
 });
 
