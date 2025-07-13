@@ -11,7 +11,7 @@ $router->get('/consultarCpf/{cpf:.+}', function ($cpf) {
     $cpf = GH::validateCpf($cpf);
 
     if (!$cpf) {
-        return GH::makeResponse('CPF inválido', 400);
+        return GH::makeResponse('CPF inválido, verifique o número informado e tente novamente.', 400);
     }
 
     // return GH::makeResponse('CPF válido: ' . $cpf, 200); // Debugging
@@ -19,15 +19,11 @@ $router->get('/consultarCpf/{cpf:.+}', function ($cpf) {
     // Pega a URL de consulta no environment
     $apiUrl = GH::env(
         'API_CONSULTA_CPF', // Variável de ambiente
-        'API para consulta de CPF não configurada' // Retorno de erro se não estiver definida
+        'API para consulta de CPF não configurada. Verifique as configurações e tente novamente.' // Retorno de erro se não estiver definida
     );
 
     // Faz a requisição POST para a API externa com Guzzle
     $client = new \GuzzleHttp\Client();
-
-    if (!$apiUrl) {
-        return GH::makeResponse('API para consulta de CPF não configurada', 500);
-    }
 
     try {
         $response = $client->post($apiUrl, [
