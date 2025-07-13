@@ -7,10 +7,6 @@ $router->get('/', function () {
 	return GH::makeResponse('API Gosat with ' . app()->version());
 });
 
-$router->get('/docs', function () {
-	// Futuramente sera o caminho para a documentação
-});
-
 $router->get('/consultarCpf/{cpf:.+}', function ($cpf) {
 	$cpf = GH::validateCpf($cpf);
 

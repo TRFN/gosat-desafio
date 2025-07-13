@@ -9,7 +9,6 @@ namespace App\Swagger;
  *     description="Documentação da API para integração com serviços externos (CPF e Ofertas)."
  * )
  *
- *
  * @OA\Server(
  *     url="http://localhost:7001",
  *     description="API Principal"
@@ -96,7 +95,6 @@ namespace App\Swagger;
  *         )
  *     )
  * )
- * 
  */
 
 class SwaggerInfo {}

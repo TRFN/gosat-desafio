@@ -79,8 +79,6 @@ $app->singleton(ResponseFactory::class, function ($app) {
 // Ativa o Eloquent ORM para manipulação de banco de dados via modelos
 $app->withEloquent();
 
-// Carrega configurações de banco de dados a partir de config/database.php
-$app->configure('database');
 
 
 /*
@@ -103,6 +101,12 @@ $app->singleton(
     App\Console\Kernel::class
 );
 
+$app->middleware([
+    App\Http\Middleware\Cors::class,
+]);
+
+// Carrega configurações de banco de dados a partir de config/database.php
+$app->configure('database');
 $app->configure('app');
 
 $app->router->group([
