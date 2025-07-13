@@ -1,0 +1,221 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API Gosat",
+        "description": "Documentação da API para integração com serviços externos (CPF e Ofertas).",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:7001",
+            "description": "API Principal"
+        }
+    ],
+    "paths": {
+        "/": {
+            "get": {
+                "tags": [
+                    "Status"
+                ],
+                "summary": "Status da API",
+                "description": "Retorna uma mensagem simples com a versão da API.",
+                "operationId": "5a09dd34d1de4a4fdd16c398984f1530",
+                "responses": {
+                    "200": {
+                        "description": "API funcionando corretamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "response": {
+                                            "type": "string",
+                                            "example": "API Gosat with Lumen (10.0.4) (Laravel Components ^10.0)"
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/consultarCpf/{cpf}": {
+            "get": {
+                "tags": [
+                    "Consultas"
+                ],
+                "summary": "Consulta CPF",
+                "description": "Valida um CPF informado e realiza uma consulta via API externa.",
+                "operationId": "6edd903ea641140dba7f63f1a8454295",
+                "parameters": [
+                    {
+                        "name": "cpf",
+                        "in": "path",
+                        "description": "CPF a ser consultado (apenas números).",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "12345678909"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CPF válido e consulta realizada com sucesso.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "response": {
+                                            "type": "object"
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "CPF inválido ou erro na consulta.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "response": {
+                                            "type": "string",
+                                            "example": "CPF inválido."
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/consultarOfertas": {
+            "post": {
+                "tags": [
+                    "Consultas"
+                ],
+                "summary": "Consulta Ofertas",
+                "description": "Consulta ofertas financeiras a partir de um CPF, instituição e modalidade.",
+                "operationId": "63410671059f9c5b82ec19940dfe2014",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "cpf",
+                                    "instituicao_id",
+                                    "codModalidade"
+                                ],
+                                "properties": {
+                                    "cpf": {
+                                        "type": "string",
+                                        "example": "12345678909"
+                                    },
+                                    "instituicao_id": {
+                                        "type": "integer",
+                                        "example": 12
+                                    },
+                                    "codModalidade": {
+                                        "type": "string",
+                                        "example": "123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Consulta de ofertas realizada com sucesso.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "response": {
+                                            "type": "object"
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Parâmetros inválidos ou faltando.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "response": {
+                                            "type": "string",
+                                            "example": "instituicao_id deve ser um número válido."
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Status",
+            "description": "Status"
+        },
+        {
+            "name": "Consultas",
+            "description": "Consultas"
+        }
+    ]
+}

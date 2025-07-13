@@ -82,6 +82,7 @@ $app->withEloquent();
 // Carrega configurações de banco de dados a partir de config/database.php
 $app->configure('database');
 
+
 /*
 |--------------------------------------------------------------------------
 | Bindings do Contêiner de Injeção de Dependência
