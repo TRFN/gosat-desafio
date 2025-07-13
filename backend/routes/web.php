@@ -16,7 +16,6 @@
 $router->get('/', function () {
     return response()->json([
         'message' => 'Welcome to the GoSat API',
-        'documentation' => url('/docs'),
         'version' => app()->version(),
         'status' => 'running',
     ])->setStatusCode(200);
