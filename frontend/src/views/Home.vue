@@ -1,9 +1,9 @@
 <template>
   <div class="container py-5">
     <div class="text-center mb-5">
-      <h1 class="display-5 fw-bold">Bem-vindo à API Gosat</h1>
+      <h1 class="display-5 fw-bold">Consulta de ofertas gosat</h1>
       <p class="lead">
-        Utilize os recursos abaixo para consultar ofertas financeiras ou acessar a documentação da API.
+		Consulte as melhores ofertas disponíveis de forma simples e rápida ou acesse a documentação completa da API para integração. 
       </p>
     </div>
 
@@ -13,7 +13,7 @@
         Consultar Ofertas
       </router-link>
 
-      <a href="http://localhost:7001/docs/" target="blank" class="btn btn-outline-secondary btn-lg d-flex align-items-center gap-2">
+      <a href="http://localhost:7001/docs/" rel="noopener noreferrer" target="blank" class="btn btn-secondary btn-lg d-flex align-items-center gap-2">
         <i class="bi bi-file-earmark-text"></i>
         Documentação
 	  </a>

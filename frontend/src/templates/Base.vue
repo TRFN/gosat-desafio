@@ -1,11 +1,16 @@
 <template>
   <!-- Botão de tema no topo direito -->
-    <div class="d-flex justify-content-end mb-3">
-      <button @click="toggleTheme" class="btn btn-sm btn-outline-dark d-flex align-items-center gap-1">
-        <i :class="theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon'"></i>
+    <div class="d-flex position-absolute top-0 end-0 p-5">
+      <button @click="toggleTheme" :class="theme === 'dark' ? 'btn-warning' : 'btn-dark'" class="btn btn-sm d-flex align-items-center gap-1 px-3">
+        <i :class="theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon'" class="me-1"></i>
         {{ theme === 'dark' ? 'Claro' : 'Escuro' }}
       </button>
     </div>
+
+  <!-- logo -->
+  <div class="text-center mb-4">
+    <img src="/gosat.webp" alt="Logo" class="img-fluid">
+  </div>
   <router-view />
 </template>
 
