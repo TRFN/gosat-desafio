@@ -10,15 +10,16 @@ use Illuminate\Http\JsonResponse;
  * Classe helper para integrar e manipular chamadas à API Gosat,
  * validação de CPF, tratamento de respostas HTTP e gerenciamento de erros.
  *
- * Essa classe encapsula a lógica para validação de CPF,
- * realização de chamadas HTTP via Guzzle com tratamento customizado,
- * além de padronizar as respostas JSON da API.
+ * Funções principais:
+ * - Validar CPF
+ * - Encapsular chamadas HTTP via Guzzle
+ * - Padronizar respostas JSON
  */
 class GosatHelper
 {
     /**
      * Lista de CPFs inválidos permitidos para testes.
-     * Esses CPFs não são válidos no mundo real, mas podem ser usados para testes internos.
+     * Esses CPFs não são válidos no mundo real, mas podem ser utilizados em ambientes de homologação.
      *
      * @var string[]
      */
@@ -28,61 +29,33 @@ class GosatHelper
         '12312312312',
     ];
 
-    /**
-     * Código HTTP para Not Found (404).
-     */
+    // Códigos HTTP padrão
+    public const HTTP_OK = 200;
+    public const HTTP_BAD_REQUEST = 400;
+    public const HTTP_UNAUTHORIZED = 401;
+    public const HTTP_FORBIDDEN = 403;
     public const HTTP_NOT_FOUND = 404;
-
-    /**
-     * Código HTTP para Internal Server Error (500).
-     */
     public const HTTP_SERVER_ERROR = 500;
 
-    /**
-     * Código HTTP para Unauthorized (401).
-     */
-    public const HTTP_UNAUTHORIZED = 401;
-
-    /**
-     * Código HTTP para Forbidden (403).
-     */
-    public const HTTP_FORBIDDEN = 403;
-
-    /**
-     * Código HTTP para Bad Request (400).
-     */
-    public const HTTP_BAD_REQUEST = 400;
-
-    /**
-     * Código HTTP para OK (200).
-     */
-    public const HTTP_OK = 200;
-
-    /**
-     * Configuração que permite ou não chamadas para rotas não registradas.
-     *
-     * @var bool
-     */
-    private const ALLOW_NOT_REGISTERED_REQUESTS = false;
-
-    /**
-     * Configuração que permite ou não a utilização dos CPFs inválidos da lista para testes.
-     *
-     * @var bool
-     */
-    private const ALLOW_INVALID_CPFS_BY_LIST = true;
-
-    /**
-     * Constantes para as consultas possíveis (identificadores internos).
-     */
+    // Identificadores internos para rotas da API
     public const CONSULTA_CPF = 10001;
     public const CONSULTA_OFERTA = 10002;
 
     /**
-     * Verifica se um código HTTP informado é válido (entre 100 e 599).
+     * Permite ou não chamadas para URLs arbitrárias (não registradas).
+     */
+    private const ALLOW_NOT_REGISTERED_REQUESTS = false;
+
+    /**
+     * Permite uso de CPFs inválidos (mas listados) para testes.
+     */
+    private const ALLOW_INVALID_CPFS_BY_LIST = true;
+
+    /**
+     * Verifica se um código HTTP está dentro da faixa válida.
      *
-     * @param int $code Código HTTP para validação.
-     * @return bool True se válido, false caso contrário.
+     * @param int $code
+     * @return bool
      */
     public static function isValidCode(int $code): bool
     {
@@ -90,33 +63,32 @@ class GosatHelper
     }
 
     /**
-     * Valida um CPF (formato e dígitos verificadores).
+     * Valida um CPF (remove caracteres não numéricos e verifica dígitos verificadores).
+     * Aceita CPFs inválidos da lista, se configurado.
      *
-     * Aceita também CPFs da lista de inválidos permitidos para testes, se configurado.
-     *
-     * @param string $cpf CPF a ser validado.
-     * @return string|bool Retorna o CPF limpo se válido, ou false se inválido.
+     * @param string $cpf
+     * @return string|bool
      */
     public static function validateCpf(string $cpf): string|bool
     {
-        // Remove caracteres não numéricos
-        $cpf = preg_replace('/\D/', '', $cpf);
+        $cpf = preg_replace('/\D/', '', $cpf); // Remove tudo que não for número
 
-        // Verifica se o CPF é um dos inválidos permitidos
         if (in_array($cpf, self::$allowedInvalidCpfs) && self::ALLOW_INVALID_CPFS_BY_LIST) {
             return $cpf;
         }
 
-        // Verifica se o CPF tem 11 dígitos e não é uma sequência repetida
+        // Verifica tamanho e se é repetido
         if (strlen($cpf) != 11 || preg_match('/(\d)\1{10}/', $cpf)) {
             return false;
         }
 
+        // Valida dígitos verificadores
         for ($t = 9; $t < 11; $t++) {
             $sum = 0;
             for ($i = 0; $i < $t; $i++) {
                 $sum += $cpf[$i] * (($t + 1) - $i);
             }
+
             $rest = ($sum * 10) % 11;
             $digit = ($rest == 10) ? 0 : $rest;
 
@@ -129,22 +101,19 @@ class GosatHelper
     }
 
     /**
-     * Realiza uma chamada HTTP POST para uma API externa, com tratamento de erros e respostas padronizadas.
+     * Realiza uma chamada POST para uma API externa, com tratamento completo de erro e sucesso.
      *
-     * Pode receber como primeiro parâmetro um identificador de consulta (int),
-     * que será convertido para a URL de ambiente correspondente,
-     * ou uma URL direta (string).
-     *
-     * @param string|int $url URL ou código identificador da API.
-     * @param array $payload Dados a serem enviados na requisição POST (JSON).
-     * @param callable|int $onSuccess Callback ou código HTTP para sucesso (default -1 = 200).
-     * @param callable|int|string $onError Callback, código HTTP ou mensagem para erro (default -1 = 500).
-     * @return JsonResponse Resposta JSON padronizada.
+     * @param string|int $url - Pode ser uma URL ou um identificador interno (ex: CONSULTA_CPF)
+     * @param array $payload - Dados enviados como JSON no corpo da requisição
+     * @param callable|int $onSuccess - Código HTTP ou callback executado em sucesso
+     * @param callable|int|string $onError - Código HTTP, callback ou mensagem para erro
+     * @return JsonResponse
      */
     public static function callApi(string|int $url, array $payload, callable|int $onSuccess = -1, callable|int|string $onError = -1)
     {
         $internalApiCall = false;
-        // Se for código numérico, mapeia para a URL da API
+
+        // Se for um código numérico, mapeia para variável de ambiente
         if (is_int($url)) {
             $apiMap = [
                 self::CONSULTA_CPF => ['API_CONSULTA_CPF', 'API para consulta de CPF não configurada.'],
@@ -156,7 +125,7 @@ class GosatHelper
             }
 
             [$envKey, $errorMsg] = $apiMap[$url];
-            $url = env($envKey); // Usa env diretamente, sem helper
+            $url = env($envKey);
 
             if (!$url) {
                 return self::makeResponse($errorMsg, self::HTTP_BAD_REQUEST);
@@ -165,27 +134,28 @@ class GosatHelper
             }
         }
 
-        // Se chegou aqui e não é string, retorna erro
+        // Se não é string (URL) válida
         if (!is_string($url)) {
             return self::makeResponse("Formato de URL inválido para chamada de API.", self::HTTP_SERVER_ERROR);
         }
 
-        // Se não é uma URL registrada e não for permitido uso arbitrário
+        // Bloqueia chamadas arbitrárias se não permitido
         if (!$internalApiCall && !self::ALLOW_NOT_REGISTERED_REQUESTS) {
             return self::makeResponse("Chamadas de API não registradas não são permitidas.", self::HTTP_BAD_REQUEST);
         }
 
-        // Garante que a URL não está vazia
         if (empty($url)) {
             return self::makeResponse("URL da API não pode ser vazia.", self::HTTP_BAD_REQUEST);
         }
 
+        // Normaliza $onSuccess
         if (is_int($onSuccess)) {
             $onSuccess = function ($response) use ($onSuccess) {
                 return self::makeResponse($response, self::isValidCode($onSuccess) ? $onSuccess : self::HTTP_OK);
             };
         }
 
+        // Normaliza $onError
         if (is_int($onError)) {
             $onError = function ($error) use ($onError) {
                 return self::makeResponse([
@@ -205,9 +175,10 @@ class GosatHelper
 
         try {
             $client = new Client([
-                'timeout' => 10,
+                'timeout' => 10, // Tempo limite da requisição
             ]);
 
+            // Envia POST com payload JSON
             $response = $client->post($url, ['json' => $payload]);
             $body = $response->getBody()->getContents();
             $data = json_decode($body, true);
@@ -219,20 +190,22 @@ class GosatHelper
     }
 
     /**
-     * Gera uma resposta JSON padrão para API, contendo sucesso, mensagem e código HTTP.
+     * Gera uma resposta padronizada da API no formato JSON.
      *
-     * @param mixed $message Mensagem ou dados da resposta.
-     * @param int $status Código HTTP da resposta (default 200).
-     * @return JsonResponse Objeto de resposta JSON.
+     * @param mixed $message - Dados ou mensagem de retorno
+     * @param int $status - Código HTTP (default: 200)
+     * @return JsonResponse
      */
     public static function makeResponse($message, $status = -1): JsonResponse
     {
+        // Define status default como 200 (OK)
         if ($status == -1) {
-            $status = self::HTTP_OK; // Define o status como OK se não for especificado
+            $status = self::HTTP_OK;
         }
 
+        // Garante que o status seja válido
         if (!self::isValidCode($status)) {
-            $status = self::HTTP_BAD_REQUEST; // Se o status não for válido, define como BAD_REQUEST
+            $status = self::HTTP_BAD_REQUEST;
         }
 
         return response()->json([

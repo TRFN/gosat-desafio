@@ -18,7 +18,7 @@
 			</button><br><br>
 		</form>
 
-		<div v-if="resultado" class="alert alert-success">
+		<div v-if="resultado && debug" class="alert alert-success">
 			<pre>{{ resultado }}</pre>
 		</div>
 	</div>
@@ -95,18 +95,43 @@ import SolicitacoesCPF from '../models/SolicitacoesCPF.vue'
 import { encontrarMelhorOferta } from '../services/gosatHelper'
 import Swal from 'sweetalert2/dist/sweetalert2.all.js'
 
-
+// Variável reativa para armazenar a oferta selecionada pelo usuário
 const ofertaEscolhida = ref(null)
 
+// CPF digitado pelo usuário (string somente números)
 const cpf = ref('')
+
+// Mensagem de erro para validação ou falha em requisições
 const erro = ref('')
+
+// Flag para indicar carregamento em andamento
 const loading = ref(false)
+
+// Resultado bruto (debug) das chamadas à API
 const resultado = ref(null)
+
+// Controle da etapa do fluxo da interface (1: inserir CPF, 2: escolher oferta, 3: confirmação)
 const etapa = ref(1)
-const ofertas = ref([]);
+
+// Lista reativa de ofertas disponíveis para o CPF
+const ofertas = ref([])
+
+// Lista de solicitações já feitas para o CPF informado
 const solicitacoesCpf = ref([])
+
+// Objeto que armazena a solicitação registrada após confirmação
 const solicitacaoRegistrada = ref({})
 
+// Debug: Exibe o resultado bruto das requisições
+const debug = ref(false)
+
+
+/**
+ * Desfaz uma solicitação existente com confirmação via modal SweetAlert.
+ * Atualiza a lista local e o backend removendo o registro.
+ *
+ * @param {number} id - ID da solicitação a ser removida
+ */
 async function desfazerPedido(id) {
 	const confirmacao = await Swal.fire({
 		title: 'Tem certeza?',
@@ -117,23 +142,24 @@ async function desfazerPedido(id) {
 		cancelButtonText: 'Cancelar'
 	});
 
-	if (!confirmacao.isConfirmed) return
+	if (!confirmacao.isConfirmed) return // Sai se o usuário cancelar
 
 	try {
-		// Buscar a solicitação que será removida
+		// Encontra a solicitação a ser removida no array local
 		let solicitacao = solicitacoesCpf.value.find(s => s.id === id);
 
+		// Atualiza a flag "jaTemSolicitacao" na lista de ofertas para refletir remoção
 		ofertas.value = ofertas.value.map(oferta => {
 			if (oferta.codModalidade === solicitacao.codModalidade && oferta.instituicao === solicitacao.instituicao) {
-				oferta.jaTemSolicitacao = false; // Remove a marcação de solicitação
+				oferta.jaTemSolicitacao = false;
 			}
 			return oferta;
 		});
 
-		// Remove do banco
+		// Chama API para remover a solicitação do backend
 		await api.delete(`/solicitacoes/${id}`)
 
-		// Remove da lista local
+		// Remove da lista local de solicitações
 		solicitacoesCpf.value = solicitacoesCpf.value.filter(s => s.id !== id);
 
 		Swal.fire('Pronto!', 'Solicitação desfeita com sucesso.', 'success')
@@ -143,7 +169,11 @@ async function desfazerPedido(id) {
 	}
 }
 
-
+/**
+ * Limpa campos e estados para reiniciar a busca.
+ *
+ * @param {Event|false} event - Evento do input para capturar valor, se houver
+ */
 function limparErro(event = false) {
 	erro.value = '';
 	resultado.value = null;
@@ -155,11 +185,20 @@ function limparErro(event = false) {
 	solicitacoesCpf.value = [];
 }
 
+/**
+ * Validação simples de CPF (apenas verifica se tem 11 dígitos numéricos).
+ *
+ * @param {string} cpfStr - CPF a ser validado
+ * @returns {boolean}
+ */
 function validarCpfBasico(cpfStr) {
-	// Só permite números, e tem que ter 11 dígitos
 	return /^\d{11}$/.test(cpfStr)
 }
 
+/**
+ * Confirma a escolha da oferta e registra a solicitação no backend.
+ * Atualiza a etapa para mostrar confirmação.
+ */
 async function confirmarEscolha() {
 	if (ofertaEscolhida.value === null) return
 
@@ -189,6 +228,10 @@ async function confirmarEscolha() {
 	}
 }
 
+/**
+ * Consulta as ofertas e solicitações associadas ao CPF informado.
+ * Atualiza listas reativas com dados recebidos da API.
+ */
 async function consultarCpf() {
 	if (!validarCpfBasico(cpf.value)) {
 		erro.value = 'CPF inválido. Deve conter 11 números.'
@@ -201,7 +244,8 @@ async function consultarCpf() {
 
 	try {
 		const _cpf = cpf.value;
-		// depois que carregar as ofertas, carregar as solicitações feitas com este CPF
+
+		// Consulta solicitações feitas para o CPF para mostrar ao usuário
 		try {
 			const responseSolicitacoes = await api.get(`/solicitacoesPorCpf/${cpf.value}`)
 			resultado.value = JSON.stringify(responseSolicitacoes.data); // Debug
@@ -209,8 +253,11 @@ async function consultarCpf() {
 		} catch (e) {
 			solicitacoesCpf.value = []
 		}
+
+		// Consulta dados do CPF na API externa
 		const response = await api.get(`/consultarCpf/${_cpf}`)
 		resultado.value = JSON.stringify(response.data); // Debug
+
 		if (response.data.success) {
 			let instituicoes = response.data.response.instituicoes || [];
 			if (instituicoes.length === 0) {
@@ -218,22 +265,24 @@ async function consultarCpf() {
 				return;
 			}
 
+			// Para cada instituição encontrada, consulta modalidades e ofertas
 			for (let i = 0; i < instituicoes.length; i++) {
 				let _instituicao = instituicoes[i], _modalidades;
 				resultado.value = JSON.stringify(_instituicao); // Debug
 
+				// Clona instituição para preservar reatividade
 				ofertas.value[i] = structuredClone(_instituicao);
 
 				_modalidades = _instituicao.modalidades || [];
 				if (_modalidades.length === 0) {
-					continue; // Pula se não tiver modalidades
+					continue; // Pula instituição sem modalidades
 				}
 
+				// Para cada modalidade, faz consulta específica de oferta
 				for (let j = 0; j < _modalidades.length; j++) {
 					let _modalidade = _modalidades[j];
 					resultado.value = JSON.stringify(_modalidade); // Debug
 
-					// Chamada assíncrona aguardada
 					try {
 						const _oferta = await api.post('/consultarOfertas', {
 							cpf: _cpf,
@@ -249,6 +298,8 @@ async function consultarCpf() {
 					}
 				}
 			}
+
+			// Marca ofertas que já possuem solicitação existente
 			ofertas.value = encontrarMelhorOferta(ofertas.value).map(oferta => {
 				oferta.jaTemSolicitacao = solicitacoesCpf.value.some(s =>
 					s.codModalidade === oferta.codModalidade &&
@@ -256,13 +307,17 @@ async function consultarCpf() {
 				);
 				return oferta;
 			});
+
 			resultado.value = JSON.stringify(ofertas.value); // Debug
+
+			// Avança para a etapa de escolha da oferta
 			etapa.value = 2;
 		} else {
 			erro.value = response.data.response || 'Erro ao consultar CPF.'
 			return;
 		}
 	} catch (e) {
+		// Tratamento específico para erro 422 (validação)
 		if (e.response?.data?.response?.code === 422) {
 			const rawMessage = e.response?.data?.response?.return || ''
 			const match = rawMessage.match(/"([^"]+)"\s?$/)
@@ -274,6 +329,7 @@ async function consultarCpf() {
 		loading.value = false
 	}
 }
+
 </script>
 
 <style scoped>
