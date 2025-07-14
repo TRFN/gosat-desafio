@@ -6,6 +6,13 @@
 
 ---
 
+## Teste o projeto online
+
+Você pode testar o projeto Gosat online através do seguinte link: 
+- Frontend: [Consulta de ofertas gosat](http://192.109.11.77:7000/)
+- Backend: [Gosat API](http://192.109.11.77:7001/)
+- Documentação da API: [Swagger UI](http://192.109.11.77:7001/docs)
+
 ## Descrição
 
 O projeto Gosat é uma aplicação fullstack para consulta de CPF e ofertas financeiras, além de permitir o registro e gerenciamento de solicitações de empréstimos.
