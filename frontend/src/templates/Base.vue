@@ -7,6 +7,12 @@
       </button>
     </div>
 
+
+     <div class="d-flex position-absolute top-0 start-0 p-5">
+      <button v-if="canGoBack" @click="goBack" :class="theme === 'dark' ? 'btn-dark' : 'btn-secondary'" class="btn btn-sm d-flex align-items-center gap-1 px-3">
+        <i class="bi bi-arrow-left"></i> Voltar
+      </button>
+    </div>
   <!-- logo -->
   <div class="text-center mb-4">
     <img src="/gosat.webp" alt="Logo" class="img-fluid">
@@ -20,9 +26,12 @@
 </style>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
 const theme = ref('light')
+const router = useRouter()
+const route = useRoute()
 
 onMounted(() => {
   const saved = localStorage.getItem('theme')
@@ -36,5 +45,13 @@ function toggleTheme() {
   theme.value = theme.value === 'dark' ? 'light' : 'dark'
   document.body.setAttribute('data-bs-theme', theme.value)
   localStorage.setItem('theme', theme.value)
+}
+
+// Computed para saber se pode voltar (não está na rota raiz)
+const canGoBack = computed(() => route.path !== '/')
+
+// Função para voltar uma página no histórico
+function goBack() {
+  router.back()
 }
 </script>
