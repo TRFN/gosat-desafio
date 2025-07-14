@@ -1,14 +1,12 @@
 // src/services/api.js
 import axios from 'axios'
 
-// Pode pegar o token fixo ou dinamicamente (ex: localStorage, Pinia etc)
-const token = 'meu_token_secreto_123' // ou localStorage.getItem('token')
-
 const api = axios.create({
-	baseURL: '/api', // Vite proxy vai redirecionar para http://backend:7001
+	baseURL: '/api', // Aponta para o proxy configurado no vite.config.js
+	timeout: 10000,
 	headers: {
-		Authorization: `Bearer ${token}`
-	}
+		'Content-Type': 'application/json',
+	},
 })
 
 export default api
