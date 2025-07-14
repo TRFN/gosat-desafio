@@ -25,40 +25,29 @@
 
 	<div v-if="etapa === 2" class="container py-4">
 		<h2 class="mb-4">Etapa 02</h2>
+		<div v-if="solicitacoesCpf.length > 0" class="alert alert-info mb-4">
+			<h3>Solicitações já feitas para CPF: {{ cpf }}</h3>
+			<SolicitacoesCPF :solicitacoes="solicitacoesCpf" @desfazer="desfazerPedido" />
+		</div>
+		<h3>Ofertas disponíveis</h3>
 		<p>Compare e escolha a melhor oferta</p>
 		<form @submit.prevent="confirmarEscolha">
 			<div class="row row-cols-1 row-cols-md-2 g-4">
-				<div class="col" v-for="(oferta, index) in ofertas" :key="index">
+				<div class="col" v-for="(oferta, index) in ofertas.filter(oferta => !oferta.jaTemSolicitacao)"
+					:key="index">
 					<label :for="'oferta-' + index" class="card h-100 p-3 position-relative shadow-sm oferta-card"
 						:class="{ 'border-primary': ofertaEscolhida === index }">
 						<input type="radio" class="visually-hidden" :id="'oferta-' + index" :value="index"
 							v-model="ofertaEscolhida" />
 						<h5 class="card-title">{{ oferta.instituicao }}</h5>
-						<p class="card-text">
-							<strong>Modalidade:</strong> <span class="text-capitalize">{{ oferta.modalidade
-							}}</span><br>
-							<strong>Juros ao Mês:</strong> {{ (oferta.jurosMes * 100).toFixed(2) }}%<br>
-							<strong>Parcelas:</strong> {{ oferta.QntParcelaMin }} a {{ oferta.QntParcelaMax }}<br>
-							<strong>Valor:</strong> R$ {{ oferta.valorMin.toLocaleString() }} até R$ {{
-								oferta.valorMax.toLocaleString() }}<br>
-						</p>
-
-						<div>
-							<input type="range" :min="oferta.valorMin" :max="oferta.valorMax"
-								v-model.number="oferta.valorSelecionado" :step="100" class="form-range" />
-							<div>
-								Valor selecionado:
-								<strong>R$ {{ oferta.valorSelecionado.toLocaleString() }}</strong>
-							</div>
-						</div>
-
-						<Grafico :oferta="oferta" />
+						<OfertaCard :oferta="oferta" v-model:valorSelecionado="oferta.valorSelecionado"
+							v-model:parcelasSelecionadas="oferta.parcelasSelecionadas" />
 					</label>
 				</div>
 			</div>
 
 			<div class="mt-4 text-end">
-				<button class="btn btn-secondary me-2" @click.prevent="etapa = 1">
+				<button class="btn btn-secondary me-2" @click.prevent="limparErro(); etapa = 1">
 					<i class="bi bi-arrow-left me-2"></i> Voltar
 				</button>
 				<button type="submit" class="btn btn-success" :disabled="ofertaEscolhida === null">
@@ -79,6 +68,14 @@
 		<!-- Um obrigado avisando que a solicitação dele foi feita com sucesso! -->
 		<div class="alert alert-success">
 			<p>Obrigado! Sua solicitação foi feita com sucesso.</p>
+			<p>Detalhes da solicitação:</p>
+			<ul class="list-unstyled text-start">
+				<li><strong>Instituição:</strong> {{ solicitacaoRegistrada.instituicao }}</li>
+				<li><strong>Modalidade:</strong> {{ solicitacaoRegistrada.modalidade }}</li>
+				<li><strong>Valor:</strong> R$ {{ solicitacaoRegistrada.valor.toLocaleString() }}</li>
+				<li><strong>Parcelas:</strong> {{ solicitacaoRegistrada.parcelas }}</li>
+				<li><strong>Juros ao Mês:</strong> {{ (solicitacaoRegistrada.jurosMes * 100).toFixed(2) }}%</li>
+			</ul>
 		</div>
 
 		<!-- voltar ao inicio -->
@@ -93,8 +90,11 @@
 
 import { ref } from 'vue'
 import api from '../services/api'
-import Grafico from '../models/Grafico.vue'
+import OfertaCard from '../models/OfertaCard.vue'
+import SolicitacoesCPF from '../models/SolicitacoesCPF.vue'
 import { encontrarMelhorOferta } from '../services/gosatHelper'
+import Swal from 'sweetalert2/dist/sweetalert2.all.js'
+
 
 const ofertaEscolhida = ref(null)
 
@@ -104,11 +104,55 @@ const loading = ref(false)
 const resultado = ref(null)
 const etapa = ref(1)
 const ofertas = ref([]);
+const solicitacoesCpf = ref([])
+const solicitacaoRegistrada = ref({})
 
-function limparErro(event) {
-	erro.value = ''
-	resultado.value = null
-	cpf.value = event.target.value.replace(/\D/g, '')
+async function desfazerPedido(id) {
+	const confirmacao = await Swal.fire({
+		title: 'Tem certeza?',
+		text: 'Deseja realmente desfazer essa solicitação?',
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonText: 'Sim, desfazer',
+		cancelButtonText: 'Cancelar'
+	});
+
+	if (!confirmacao.isConfirmed) return
+
+	try {
+		// Buscar a solicitação que será removida
+		let solicitacao = solicitacoesCpf.value.find(s => s.id === id);
+
+		ofertas.value = ofertas.value.map(oferta => {
+			if (oferta.codModalidade === solicitacao.codModalidade && oferta.instituicao === solicitacao.instituicao) {
+				oferta.jaTemSolicitacao = false; // Remove a marcação de solicitação
+			}
+			return oferta;
+		});
+
+		// Remove do banco
+		await api.delete(`/solicitacoes/${id}`)
+
+		// Remove da lista local
+		solicitacoesCpf.value = solicitacoesCpf.value.filter(s => s.id !== id);
+
+		Swal.fire('Pronto!', 'Solicitação desfeita com sucesso.', 'success')
+	} catch (e) {
+		console.error(e)
+		Swal.fire('Erro!', 'Não foi possível desfazer a solicitação.', 'error')
+	}
+}
+
+
+function limparErro(event = false) {
+	erro.value = '';
+	resultado.value = null;
+	event ? (cpf.value = event.target.value.replace(/\D/g, '')) : (cpf.value = '');
+	ofertaEscolhida.value = null;
+	loading.value = false;
+	resultado.value = null;
+	ofertas.value = [];
+	solicitacoesCpf.value = [];
 }
 
 function validarCpfBasico(cpfStr) {
@@ -127,14 +171,20 @@ async function confirmarEscolha() {
 		codModalidade: oferta.codModalidade,
 		valor: oferta.valorSelecionado || oferta.valorMin,
 		jurosMes: oferta.jurosMes,
-		parcelas: oferta.QntParcelaMax
+		parcelas: oferta.parcelasSelecionadas || oferta.QntParcelaMax
 	}
 
 	try {
-		const response = await api.post('/registrarOferta', payload)
+		const response = await api.post('/solicitarEmprestimo', payload)
+		console.log('Solicitação registrada com sucesso:', response.data);
+		if (!response.data.success) {
+			erro.value = 'Erro ao registrar sua solicitação.'
+			return
+		}
+		solicitacaoRegistrada.value = response.data.response || {}
 		etapa.value = 3
 	} catch (error) {
-		console.error('Erro ao registrar:', error)
+		console.error('Erro ao registrar:', error.message || error);
 		erro.value = 'Erro ao registrar sua escolha. Tente novamente.'
 	}
 }
@@ -151,6 +201,14 @@ async function consultarCpf() {
 
 	try {
 		const _cpf = cpf.value;
+		// depois que carregar as ofertas, carregar as solicitações feitas com este CPF
+		try {
+			const responseSolicitacoes = await api.get(`/solicitacoesPorCpf/${cpf.value}`)
+			resultado.value = JSON.stringify(responseSolicitacoes.data); // Debug
+			solicitacoesCpf.value = responseSolicitacoes.data.response || [];
+		} catch (e) {
+			solicitacoesCpf.value = []
+		}
 		const response = await api.get(`/consultarCpf/${_cpf}`)
 		resultado.value = JSON.stringify(response.data); // Debug
 		if (response.data.success) {
@@ -191,7 +249,13 @@ async function consultarCpf() {
 					}
 				}
 			}
-			ofertas.value = encontrarMelhorOferta(ofertas.value);
+			ofertas.value = encontrarMelhorOferta(ofertas.value).map(oferta => {
+				oferta.jaTemSolicitacao = solicitacoesCpf.value.some(s =>
+					s.codModalidade === oferta.codModalidade &&
+					s.instituicao === oferta.instituicao
+				);
+				return oferta;
+			});
 			resultado.value = JSON.stringify(ofertas.value); // Debug
 			etapa.value = 2;
 		} else {

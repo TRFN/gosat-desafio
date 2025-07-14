@@ -15,6 +15,7 @@ export function encontrarMelhorOferta(listaInstituicoes) {
 				QntParcelaMin: oferta.QntParcelaMin,
 				QntParcelaMax: oferta.QntParcelaMax,
 				valorSelecionado: (oferta.valorMax + oferta.valorMin) / 2, // Valor médio para o range
+				parcelasSelecionadas: Math.max(Math.floor((oferta.QntParcelaMax + oferta.QntParcelaMin) / 12) * 6, oferta.QntParcelaMin), // Média de parcelas
 			})
 		}
 	}

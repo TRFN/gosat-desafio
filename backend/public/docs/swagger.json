@@ -147,7 +147,7 @@
                                         "example": 12
                                     },
                                     "codModalidade": {
-                                        "type": "string",
+                                        "type": "any",
                                         "example": "123"
                                     }
                                 },
@@ -206,6 +206,276 @@
                     }
                 }
             }
+        },
+        "/solicitarEmprestimo": {
+            "post": {
+                "tags": [
+                    "Solicitações"
+                ],
+                "summary": "Registrar solicitação de empréstimo",
+                "description": "Registra uma nova solicitação de empréstimo com base nos dados fornecidos.",
+                "operationId": "4f305147591c1506619bf53ed4b3d5a9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "cpf",
+                                    "instituicao",
+                                    "modalidade",
+                                    "codModalidade",
+                                    "valor",
+                                    "jurosMes",
+                                    "parcelas"
+                                ],
+                                "properties": {
+                                    "cpf": {
+                                        "type": "string",
+                                        "example": "12345678901"
+                                    },
+                                    "instituicao": {
+                                        "type": "string",
+                                        "example": "Banco XPTO"
+                                    },
+                                    "modalidade": {
+                                        "type": "string",
+                                        "example": "crédito pessoal"
+                                    },
+                                    "codModalidade": {
+                                        "type": "string",
+                                        "example": "MOD001"
+                                    },
+                                    "valor": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 5000
+                                    },
+                                    "jurosMes": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 0.0495
+                                    },
+                                    "parcelas": {
+                                        "type": "integer",
+                                        "example": 12
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Solicitação registrada com sucesso.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "response": {
+                                            "type": "object",
+                                            "example": {
+                                                "id": 1,
+                                                "cpf": "12345678901",
+                                                "instituicao": "Banco XPTO",
+                                                "modalidade": "crédito pessoal",
+                                                "codModalidade": "MOD001",
+                                                "valor": 5000,
+                                                "jurosMes": 0.0495,
+                                                "parcelas": 12
+                                            }
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Parâmetros inválidos.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "response": {
+                                            "type": "object",
+                                            "example": {
+                                                "cpf": [
+                                                    "O campo cpf é obrigatório."
+                                                ]
+                                            }
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/solicitacoesPorCpf/{cpf}": {
+            "get": {
+                "tags": [
+                    "Solicitações"
+                ],
+                "summary": "Listar solicitações por CPF",
+                "description": "Retorna todas as solicitações registradas associadas ao CPF informado.",
+                "operationId": "196a18b6f4495411dad3ef6c333d3cb9",
+                "parameters": [
+                    {
+                        "name": "cpf",
+                        "in": "path",
+                        "description": "CPF a ser consultado (somente números)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "12345678901"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de solicitações retornada com sucesso.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "response": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "CPF inválido ou erro ao buscar dados.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "response": {
+                                            "type": "string",
+                                            "example": "Não foi possível recuperar as solicitações."
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/solicitacoes/{id}": {
+            "delete": {
+                "tags": [
+                    "Solicitações"
+                ],
+                "summary": "Remover solicitação",
+                "description": "Remove uma solicitação de empréstimo pelo ID.",
+                "operationId": "5f7f2835a53522c0b36010553fcebc21",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID da solicitação a ser removida",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Solicitação removida com sucesso.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "response": {
+                                            "type": "string",
+                                            "example": "Solicitação removida com sucesso"
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Solicitação não encontrada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "response": {
+                                            "type": "string",
+                                            "example": "Não encontrado"
+                                        },
+                                        "code": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "tags": [
@@ -216,6 +486,10 @@
         {
             "name": "Consultas",
             "description": "Consultas"
+        },
+        {
+            "name": "Solicitações",
+            "description": "Solicitações"
         }
     ]
 }
