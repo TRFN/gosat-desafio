@@ -1,4 +1,8 @@
-# ![Gosat](https://www.gosat.org/wp-content/webp-express/webp-images/doc-root/wp-content/uploads/2024/09/gosat_marca_toposite.png.webp) Sistema de Consulta e Solicitação de Empréstimos
+![Gosat](https://www.gosat.org/wp-content/webp-express/webp-images/doc-root/wp-content/uploads/2024/09/gosat_marca_toposite.png.webp)
+
+
+# Sistema de Consulta e Solicitação de Empréstimos
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/license/mit/) [![PHP Version](https://img.shields.io/badge/php-8.x-blue.svg)](https://www.php.net/) [![Vue.js Version](https://img.shields.io/badge/vue-3.x-blue.svg)](https://vuejs.org/) [![Docker](https://img.shields.io/badge/docker-enabled-blue.svg)](https://www.docker.com/) [![MySQL Version](https://img.shields.io/badge/mysql-5.7-blue.svg)](https://www.mysql.com/)
 
 ---
 
