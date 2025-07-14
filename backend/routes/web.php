@@ -39,3 +39,7 @@ $router->post('/consultarOfertas', function (Request $post) {
 
 	return GH::callApi(GH::CONSULTA_OFERTA, $payload);
 });
+
+$router->post('/registrarOferta', 'SolicitacaoController@registrar');
+
+$router->get('/listarOfertas', 'SolicitacaoController@listar');

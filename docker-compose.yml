@@ -1,6 +1,17 @@
 version: '3.8'
 
 services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: gosat_app
+    ports:
+      - "3307:3306"
+    networks:
+      - app-network
+
   backend:
     build:
       context: ./backend

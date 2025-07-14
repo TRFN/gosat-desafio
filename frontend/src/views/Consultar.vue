@@ -26,46 +26,50 @@
 	<div v-if="etapa === 2" class="container py-4">
 		<h2 class="mb-4">Etapa 02</h2>
 		<p>Compare e escolha a melhor oferta</p>
+		<form @submit.prevent="confirmarEscolha">
+			<div class="row row-cols-1 row-cols-md-2 g-4">
+				<div class="col" v-for="(oferta, index) in ofertas" :key="index">
+					<label :for="'oferta-' + index" class="card h-100 p-3 position-relative shadow-sm oferta-card"
+						:class="{ 'border-primary': ofertaEscolhida === index }">
+						<input type="radio" class="visually-hidden" :id="'oferta-' + index" :value="index"
+							v-model="ofertaEscolhida" />
+						<h5 class="card-title">{{ oferta.instituicao }}</h5>
+						<p class="card-text">
+							<strong>Modalidade:</strong> <span class="text-capitalize">{{ oferta.modalidade
+							}}</span><br>
+							<strong>Juros ao Mês:</strong> {{ (oferta.jurosMes * 100).toFixed(2) }}%<br>
+							<strong>Parcelas:</strong> {{ oferta.QntParcelaMin }} a {{ oferta.QntParcelaMax }}<br>
+							<strong>Valor:</strong> R$ {{ oferta.valorMin.toLocaleString() }} até R$ {{
+								oferta.valorMax.toLocaleString() }}<br>
+						</p>
 
-		<div class="row row-cols-1 row-cols-md-2 g-4">
-			<div class="col" v-for="(oferta, index) in ofertas" :key="index">
-				<label :for="'oferta-' + index" class="card h-100 p-3 position-relative shadow-sm oferta-card"
-					:class="{ 'border-primary': ofertaEscolhida === index }">
-					<input type="radio" class="visually-hidden" :id="'oferta-' + index" :value="index"
-						v-model="ofertaEscolhida" />
-					<h5 class="card-title">{{ oferta.instituicao }}</h5>
-					<p class="card-text">
-						<strong>Modalidade:</strong> <span class="text-capitalize">{{ oferta.modalidade }}</span><br>
-						<strong>Juros ao Mês:</strong> {{ (oferta.jurosMes * 100).toFixed(2) }}%<br>
-						<strong>Parcelas:</strong> {{ oferta.QntParcelaMin }} a {{ oferta.QntParcelaMax }}<br>
-						<strong>Valor:</strong> R$ {{ oferta.valorMin }} até R$ {{
-							oferta.valorMax }}
-					</p>
-
-					<div>
-						<input type="range" :min="oferta.valorMin" :max="oferta.valorMax"
-							v-model.number="oferta.valorSelecionado" :step="100" class="form-range" />
 						<div>
-							Valor selecionado:
-							<strong>R$ {{ oferta.valorSelecionado.toLocaleString() }}</strong>
+							<input type="range" :min="oferta.valorMin" :max="oferta.valorMax"
+								v-model.number="oferta.valorSelecionado" :step="100" class="form-range" />
+							<div>
+								Valor selecionado:
+								<strong>R$ {{ oferta.valorSelecionado.toLocaleString() }}</strong>
+							</div>
 						</div>
-					</div>
 
-					<canvas :id="'chart-' + index" height="150"></canvas>
-				</label>
+						<Grafico :oferta="oferta" />
+					</label>
+				</div>
 			</div>
-		</div>
 
-		<div class="mt-4 text-end">
-			<!-- Botão de confirmar escolha -->
-			<!-- Desabilitado se nenhuma oferta for escolhida -->
-			<button class="btn btn-secondary me-2" @click="etapa = 1">
-				<i class="bi bi-arrow-left me-2"></i> Voltar
-			</button>
-			<button class="btn btn-success" :disabled="ofertaEscolhida === null" @click="confirmarEscolha">
-				<i class="bi bi-check-circle me-2"></i> Confirmar Escolha
-			</button>
-		</div>
+			<div class="mt-4 text-end">
+				<button class="btn btn-secondary me-2" @click.prevent="etapa = 1">
+					<i class="bi bi-arrow-left me-2"></i> Voltar
+				</button>
+				<button type="submit" class="btn btn-success" :disabled="ofertaEscolhida === null">
+					<i class="bi bi-check-circle me-2"></i> Confirmar Escolha
+				</button>
+			</div>
+
+			<div v-if="erro" class="alert alert-danger mt-5">
+				<pre>{{ erro }}</pre>
+			</div>
+		</form>
 	</div>
 
 
@@ -78,7 +82,7 @@
 		</div>
 
 		<!-- voltar ao inicio -->
-		<router-link to="/home" class="btn btn-primary btn-lg d-flex align-items-center gap-2">
+		<router-link to="/" class="btn btn-primary btn-lg d-flex align-items-center gap-2">
 			<i class="bi bi-home"></i>
 			Voltar ao inicio
 		</router-link>
@@ -87,48 +91,12 @@
 
 <script setup>
 
-import { onMounted, nextTick, ref } from 'vue'
+import { ref } from 'vue'
 import api from '../services/api'
-import Chart from 'chart.js/auto'
+import Grafico from '../models/Grafico.vue'
 import { encontrarMelhorOferta } from '../services/gosatHelper'
 
 const ofertaEscolhida = ref(null)
-
-onMounted(async () => {
-	await nextTick()
-	desenharGraficos()
-})
-
-function desenharGraficos() {
-	ofertas.value.forEach((oferta, index) => {
-		const ctx = document.getElementById(`chart-${index}`)
-		if (ctx) {
-			new Chart(ctx, {
-				type: 'bar',
-				data: {
-					labels: ['Juros (%)', 'Valor Máx (mil)', 'Parcelas'],
-					datasets: [{
-						label: 'Oferta',
-						data: [
-							(oferta.jurosMes * 100).toFixed(2),
-							(oferta.valorMax / 1000).toFixed(2),
-							oferta.QntParcelaMax
-						],
-						backgroundColor: ['#0d6efd', '#20c997', '#ffc107']
-					}]
-				},
-				options: {
-					responsive: true,
-					plugins: { legend: { display: false } }
-				}
-			})
-		}
-	})
-}
-
-function confirmarEscolha() {
-	etapa.value = 3
-}
 
 const cpf = ref('')
 const erro = ref('')
@@ -146,6 +114,29 @@ function limparErro(event) {
 function validarCpfBasico(cpfStr) {
 	// Só permite números, e tem que ter 11 dígitos
 	return /^\d{11}$/.test(cpfStr)
+}
+
+async function confirmarEscolha() {
+	if (ofertaEscolhida.value === null) return
+
+	const oferta = ofertas.value[ofertaEscolhida.value]
+	const payload = {
+		cpf: cpf.value,
+		instituicao: oferta.instituicao,
+		modalidade: oferta.modalidade,
+		codModalidade: oferta.codModalidade,
+		valor: oferta.valorSelecionado || oferta.valorMin,
+		jurosMes: oferta.jurosMes,
+		parcelas: oferta.QntParcelaMax
+	}
+
+	try {
+		const response = await api.post('/registrarOferta', payload)
+		etapa.value = 3
+	} catch (error) {
+		console.error('Erro ao registrar:', error)
+		erro.value = 'Erro ao registrar sua escolha. Tente novamente.'
+	}
 }
 
 async function consultarCpf() {
