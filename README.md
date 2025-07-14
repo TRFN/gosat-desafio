@@ -125,3 +125,76 @@ A documentação inclui:
 Você pode importar o arquivo JSON do Swagger para ferramentas como Swagger UI ou Insomnia para visualizar e testar a API interativamente. O arquivo Swagger está localizado em `backend/public/docs/swagger.json`.
 
 Veja a documentação completa em: [Swagger UI](http://localhost:7001/docs) (após iniciar o backend).
+
+---
+
+## Função de Seleção da Melhor Oferta
+
+No frontend, foi implementada uma função JavaScript chamada `encontrarMelhorOferta` que recebe uma lista de instituições financeiras com suas modalidades de empréstimo e monta uma lista ordenada das melhores ofertas, facilitando a escolha para o usuário.
+
+```Localizado em: frontend/src/services/gosatHelper.js```
+
+### Como funciona a função
+
+- **Itera sobre todas as instituições** e suas modalidades disponíveis.
+- Para cada modalidade, cria um objeto simplificado com informações relevantes:
+  - Nome da instituição e modalidade.
+  - Código da modalidade.
+  - Taxa de juros mensal.
+  - Valores mínimo e máximo do empréstimo.
+  - Quantidade mínima e máxima de parcelas.
+  - Valor selecionado para análise (média entre valor mínimo e máximo).
+  - Quantidade de parcelas selecionadas, calculada para representar um meio-termo ponderado entre mínimo e máximo.
+- **Ordena as ofertas** segundo critérios de prioridade:
+  1. Prioriza ofertas com maior valor máximo disponível.
+  2. Em caso de empate, prioriza ofertas com menor taxa de juros mensal.
+  3. Se ainda houver empate, escolhe a oferta com maior quantidade máxima de parcelas.
+
+### Código da função
+
+```javascript
+export function encontrarMelhorOferta(listaInstituicoes) {
+	const melhores = []
+
+	for (const inst of listaInstituicoes) {
+		for (const modalidade of inst.modalidades) {
+			const oferta = modalidade.oferta
+
+			melhores.push({
+				instituicao: inst.nome,
+				modalidade: modalidade.nome,
+				codModalidade: modalidade.cod,
+				jurosMes: oferta.jurosMes,
+				valorMin: oferta.valorMin,
+				valorMax: oferta.valorMax,
+				QntParcelaMin: oferta.QntParcelaMin,
+				QntParcelaMax: oferta.QntParcelaMax,
+
+				valorSelecionado: (oferta.valorMax + oferta.valorMin) / 2,
+
+				parcelasSelecionadas: Math.max(
+					Math.floor((oferta.QntParcelaMax + oferta.QntParcelaMin) / 12) * 6,
+					oferta.QntParcelaMin
+				),
+			})
+		}
+	}
+
+	melhores.sort((a, b) => {
+		if (a.valorMax !== b.valorMax) {
+			return b.valorMax - a.valorMax
+		}
+		if (a.jurosMes !== b.jurosMes) {
+			return a.jurosMes - b.jurosMes
+		}
+		return b.QntParcelaMax - a.QntParcelaMax
+	})
+
+	return melhores
+}
+```
+
+### Benefícios
+Essa função é essencial para que o usuário visualize rapidamente as melhores condições de empréstimo, com base em critérios objetivos e alinhados ao que mais impacta no custo e flexibilidade do crédito. Assim, facilitamos uma experiência mais inteligente e orientada para a tomada de decisão.
+
+---
