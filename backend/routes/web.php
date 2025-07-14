@@ -30,15 +30,11 @@ $router->post('/consultarOfertas', function (Request $post) {
 		return GH::makeResponse('instituicao_id deve ser um número válido.', GH::HTTP_BAD_REQUEST);
 	}
 
-	if (!is_string($codModalidade) || trim($codModalidade) === '') {
-		return GH::makeResponse('codModalidade deve ser uma string não vazia.', GH::HTTP_BAD_REQUEST);
-	}
-
 	// Monta payload com segurança
 	$payload = [
 		'cpf' => $cpf,
 		'instituicao_id' => (int)$instituicao_id,
-		'codModalidade' => trim($codModalidade),
+		'codModalidade' => $codModalidade,
 	];
 
 	return GH::callApi(GH::CONSULTA_OFERTA, $payload);

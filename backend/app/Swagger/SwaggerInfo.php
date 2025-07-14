@@ -73,7 +73,7 @@ namespace App\Swagger;
  *             required={"cpf", "instituicao_id", "codModalidade"},
  *             @OA\Property(property="cpf", type="string", example="12345678909"),
  *             @OA\Property(property="instituicao_id", type="integer", example=12),
- *             @OA\Property(property="codModalidade", type="string", example="123")
+ *             @OA\Property(property="codModalidade", type="any", example="123")
  *         )
  *     ),
  *     @OA\Response(
