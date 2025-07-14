@@ -1,18 +1,20 @@
 <template>
   <!-- Botão de tema no topo direito -->
-    <div class="d-flex position-absolute top-0 end-0 p-5">
-      <button @click="toggleTheme" :class="theme === 'dark' ? 'btn-warning' : 'btn-dark'" class="btn btn-sm d-flex align-items-center gap-1 px-3">
-        <i :class="theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon'" class="me-1"></i>
-        {{ theme === 'dark' ? 'Claro' : 'Escuro' }}
-      </button>
-    </div>
+  <div class="d-flex position-absolute top-0 end-0 p-5">
+    <button @click="toggleTheme" :class="theme === 'dark' ? 'btn-warning' : 'btn-dark'"
+      class="btn btn-sm d-flex align-items-center gap-1 px-3">
+      <i :class="theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon'" class="me-1"></i>
+      {{ theme === 'dark' ? 'Claro' : 'Escuro' }}
+    </button>
+  </div>
 
 
-     <div class="d-flex position-absolute top-0 start-0 p-5">
-      <button v-if="canGoBack" @click="goBack" :class="theme === 'dark' ? 'btn-dark' : 'btn-secondary'" class="btn btn-sm d-flex align-items-center gap-1 px-3">
-        <i class="bi bi-arrow-left"></i> Voltar
-      </button>
-    </div>
+  <div class="d-flex position-absolute top-0 start-0 p-5">
+    <button v-if="canGoBack" @click="goBack" :class="theme === 'dark' ? 'btn-dark' : 'btn-secondary'"
+      class="btn btn-sm d-flex align-items-center gap-1 px-3">
+      <i class="bi bi-arrow-left"></i> Voltar
+    </button>
+  </div>
   <!-- logo -->
   <div class="text-center mb-4">
     <img src="/gosat.webp" alt="Logo" class="img-fluid">
@@ -20,10 +22,7 @@
   <router-view />
 </template>
 
-<style scoped>
-
-
-</style>
+<style scoped></style>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
@@ -52,6 +51,10 @@ const canGoBack = computed(() => route.path !== '/')
 
 // Função para voltar uma página no histórico
 function goBack() {
-  router.back()
+  if (window.location.hash.startsWith('#etapa')) {
+    history.back() // Deixa o sistema de etapas do Consultar.vue cuidar disso
+  } else {
+    router.back() // Volta uma rota normalmente
+  }
 }
 </script>
